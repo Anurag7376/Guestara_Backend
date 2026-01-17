@@ -5,23 +5,21 @@ const SubcategorySchema = new mongoose.Schema(
     categoryId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
-      required: true
+      required: true,
     },
 
     name: { type: String, required: true, trim: true },
     image: { type: String, default: null },
     description: { type: String, default: null },
 
-    // Optional override (null => inherit from category)
     tax_applicable: { type: Boolean, default: null },
     tax_percentage: { type: Number, default: null, min: 0, max: 100 },
 
-    is_active: { type: Boolean, default: true }
+    is_active: { type: Boolean, default: true },
   },
   { timestamps: true }
 );
 
-// Unique name under same category
 SubcategorySchema.index({ categoryId: 1, name: 1 }, { unique: true });
 
 SubcategorySchema.pre("validate", function (next) {

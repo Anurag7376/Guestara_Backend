@@ -12,15 +12,14 @@ const CategorySchema = new mongoose.Schema(
       type: Number,
       default: null,
       min: 0,
-      max: 100
+      max: 100,
     },
 
-    is_active: { type: Boolean, default: true }
+    is_active: { type: Boolean, default: true },
   },
   { timestamps: true }
 );
 
-// Unique name (single restaurant)
 CategorySchema.index({ name: 1 }, { unique: true });
 
 CategorySchema.pre("validate", function (next) {

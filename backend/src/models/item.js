@@ -1,29 +1,35 @@
 import mongoose from "mongoose";
 
-const PRICING_TYPES = ["STATIC", "TIERED", "COMPLIMENTARY", "DISCOUNTED", "DYNAMIC_TIME"];
+const PRICING_TYPES = [
+  "STATIC",
+  "TIERED",
+  "COMPLIMENTARY",
+  "DISCOUNTED",
+  "DYNAMIC_TIME",
+];
 const PARENT_TYPES = ["CATEGORY", "SUBCATEGORY"];
 
 const TierSchema = new mongoose.Schema(
   {
     upto: { type: Number, required: true, min: 0 },
-    price: { type: Number, required: true, min: 0 }
+    price: { type: Number, required: true, min: 0 },
   },
   { _id: false }
 );
 
 const DynamicWindowSchema = new mongoose.Schema(
   {
-    start: { type: String, required: true }, // "HH:mm"
-    end: { type: String, required: true },   // "HH:mm"
-    price: { type: Number, required: true, min: 0 }
+    start: { type: String, required: true },
+    end: { type: String, required: true },
+    price: { type: Number, required: true, min: 0 },
   },
   { _id: false }
 );
 
-const AvailabilitySlotSchema = new mongoose.Schema(
+const AvailabilityWindowSchema = new mongoose.Schema(
   {
-    start: { type: String, required: true }, // "HH:mm"
-    end: { type: String, required: true }    // "HH:mm"
+    start: { type: String, required: true },
+    end: { type: String, required: true },
   },
   { _id: false }
 );
@@ -35,12 +41,12 @@ const ItemSchema = new mongoose.Schema(
     categoryId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
-      default: null
+      default: null,
     },
     subcategoryId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Subcategory",
-      default: null
+      default: null,
     },
 
     name: { type: String, required: true, trim: true },
@@ -49,7 +55,6 @@ const ItemSchema = new mongoose.Schema(
 
     is_active: { type: Boolean, default: true },
 
-    // Optional tax override (null => inherit)
     tax_applicable: { type: Boolean, default: null },
     tax_percentage: { type: Number, default: null, min: 0, max: 100 },
 
@@ -57,49 +62,48 @@ const ItemSchema = new mongoose.Schema(
       type: {
         type: String,
         enum: PRICING_TYPES,
-        required: true
+        required: true,
       },
       config: {
         type: mongoose.Schema.Types.Mixed,
-        required: true
-      }
+        required: true,
+      },
     },
 
-    // used for sorting/filtering
     priceMeta: {
       minPrice: { type: Number, default: 0, min: 0 },
-      maxPrice: { type: Number, default: 0, min: 0 }
+      maxPrice: { type: Number, default: 0, min: 0 },
     },
 
-    // Booking
     is_bookable: { type: Boolean, default: false },
     availability: {
       timezone: { type: String, default: "Asia/Kolkata" },
-      days: { type: [Number], default: [] }, // 1..7
-      slots: { type: [AvailabilitySlotSchema], default: [] }
-    }
+
+      days: { type: [Number], default: [] },
+
+      windows: { type: [AvailabilityWindowSchema], default: [] },
+
+      slotDurationMinutes: { type: Number, default: 60, min: 15 },
+    },
   },
   { timestamps: true }
 );
 
-// Unique item name under same parent
 ItemSchema.index(
   { parentType: 1, categoryId: 1, subcategoryId: 1, name: 1 },
   { unique: true }
 );
 
-// Search
 ItemSchema.index({ name: "text", description: "text" });
-
-// Filter/sort helper
 ItemSchema.index({ "priceMeta.minPrice": 1 });
 ItemSchema.index({ createdAt: -1 });
-
 ItemSchema.pre("validate", function (next) {
-  // Parent constraint
+  
   if (this.parentType === "CATEGORY") {
     if (!this.categoryId) {
-      return next(new Error("categoryId is required when parentType is CATEGORY"));
+      return next(
+        new Error("categoryId is required when parentType is CATEGORY")
+      );
     }
     this.subcategoryId = null;
   }
@@ -112,8 +116,7 @@ ItemSchema.pre("validate", function (next) {
     }
     this.categoryId = null;
   }
-
-  // Tax override validation
+  
   if (
     this.tax_applicable === true &&
     (this.tax_percentage === null || this.tax_percentage === undefined)
