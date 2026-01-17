@@ -112,5 +112,3 @@ If you want automated tests that exercise the full HTTP API without an external 
 - `src/modules/booking/bookingService.js` — booking, reschedule, conflict checks
 
 ---
-
-If you'd like, I can now add an in-memory MongoDB test setup and a small suite of integration tests for the endpoints. Which would you prefer next?
